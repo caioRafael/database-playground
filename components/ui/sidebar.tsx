@@ -9,29 +9,32 @@ interface SidebarProps {
   children: ReactNode;
   className?: string;
   isCollapsable?: boolean;
+  collapsible?: boolean;
 }
 
 const SidebarContext = createContext<SidebarContextType>({
   isOpen: true,
   setIsOpen: () => {},
   isCollapsable: true,
+  collapsible: true,
 });
 
 interface SidebarContextType {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   isCollapsable: boolean;
+  collapsible: boolean;
 }
 
 export function useSidebar() {
     return useContext(SidebarContext);
 }
 
-export function Sidebar({ children, className, isCollapsable = true }: SidebarProps) {
-  const [isOpen, setIsOpen] = useState(true);
+export function Sidebar({ children, className, isCollapsable = true, collapsible = true }: SidebarProps) {
+  const [isOpen, setIsOpen] = useState(collapsible ? true : false);
 
   return (
-    <SidebarContext.Provider value={{ isOpen, setIsOpen, isCollapsable }}>
+    <SidebarContext.Provider value={{ isOpen, setIsOpen, isCollapsable, collapsible }}>
         <aside
             className={cn(
                 "flex flex-col h-full bg-sidebar text-sidebar-foreground border-r border-sidebar-border transition-[width] duration-300 ease-in-out overflow-hidden",

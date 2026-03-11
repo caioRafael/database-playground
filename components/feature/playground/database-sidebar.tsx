@@ -5,6 +5,7 @@ import { DatabaseUpdate } from "./database-update";
 import { DatabaseTableList } from "./database-table-list";
 import { DatabaseTableEdit } from "./database-table-edit";
 import { DatabaseColumnEdit } from "./database-column-edit";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export function DatabaseSidebar() {
 
@@ -16,15 +17,17 @@ export function DatabaseSidebar() {
                 DB-playground
             </SidbarTrigger>
         </SidebarHeader>
-        <SidebarContent className="gap-2">
-            <DatabaseUpdate />
-            <Separator className="w-full"/>
-            <DatabaseTableList />
-            <Separator className="w-full"/>
-            <DatabaseTableEdit/>
-            <Separator className="w-full"/>
-            <DatabaseColumnEdit/>
-        </SidebarContent>
+        <ScrollArea className="h-full">
+          <SidebarContent className="gap-2">
+              <DatabaseUpdate />
+              <Separator className="w-full"/>
+              <DatabaseTableList />
+              <Separator className="w-full"/>
+              <DatabaseTableEdit/>
+              <Separator className="w-full"/>
+              <DatabaseColumnEdit/>
+          </SidebarContent>
+        </ScrollArea>
     </Sidebar>
   );
 }

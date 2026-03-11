@@ -1,7 +1,7 @@
-import { Toolbar } from "@/components/shared/toolbar";
 import { DatabaseCanvas } from "@/components/feature/playground/database-canvas";
 import { DatabaseProvider } from "@/providers/database-provider";
 import { DatabaseSidebar } from "@/components/feature/playground/database-sidebar";
+import { DatabaseToolbar } from "@/components/feature/playground/database-toolbar";
 
 export default function Home() {
   return (
@@ -9,7 +9,7 @@ export default function Home() {
       <div className="flex h-screen overflow-hidden">
         <DatabaseSidebar />
         <main className="flex-1 flex flex-col min-w-0 overflow-auto">
-          <Toolbar />
+          <DatabaseToolbar />
           <DatabaseCanvas />
         </main>
       </div>

@@ -1,11 +1,12 @@
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { ReactNode } from "react";
 
 interface ToolbarProps {
   className?: string;
+  children: ReactNode
 }
 
-export function Toolbar({ className }: ToolbarProps) {
+export function Toolbar({ className, children }: ToolbarProps) {
   return (
     <header
       className={cn(
@@ -13,12 +14,7 @@ export function Toolbar({ className }: ToolbarProps) {
         className
       )}
     >
-      <Button variant="outline" size="sm">
-        Novo
-      </Button>
-      <Button variant="outline" size="sm">
-        Executar
-      </Button>
+      {children}
     </header>
   );
 }

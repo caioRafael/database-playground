@@ -17,7 +17,7 @@ export function DatabaseColumnEdit() {
     return (
         <>
                 {selectedColumn && (
-            <div className="flex flex-col gap-3 p-4">
+            <div className="flex flex-col gap-3 p-4 mb-16">
                 <div className="flex items-center justify-between">
                 <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     Editar Coluna
