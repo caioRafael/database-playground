@@ -43,7 +43,7 @@ export function RelationshipLines({ relationships, tables }: RelationshipLinesPr
   }
 
   return (
-    <svg className="pointer-events-none absolute inset-0 h-full w-full overflow-visible">
+    <svg className="pointer-events-none absolute inset-0 z-10 h-full w-full overflow-visible">
       <defs>
         <marker
           id="arrowhead"
@@ -100,21 +100,22 @@ export function RelationshipLines({ relationships, tables }: RelationshipLinesPr
         </marker>
       </defs>
 
-      {relationships.map(rel => {
+      {relationships.map((rel, index) => {
         const sourcePos = getSourcePosition(rel.sourceTableId, rel.sourceColumnId)
         const targetPos = getColumnPosition(rel.targetTableId, rel.targetColumnId)
 
         if (!sourcePos || !targetPos) return null
 
-        // Calculate control points for a curved line
-        const midX = (sourcePos.x + targetPos.x) / 2
+        // Stagger curve control points by relationship index to reduce overlapping lines
         const dx = Math.abs(targetPos.x - sourcePos.x)
-        const controlOffset = Math.min(dx * 0.5, 100)
+        const baseOffset = Math.min(dx * 0.5, 100)
+        const stagger = 24
+        const curveOffset = baseOffset + (index - (relationships.length - 1) / 2) * stagger
 
         const path = `
           M ${sourcePos.x} ${sourcePos.y}
-          C ${sourcePos.x - controlOffset} ${sourcePos.y},
-            ${targetPos.x + controlOffset} ${targetPos.y},
+          C ${sourcePos.x - curveOffset} ${sourcePos.y},
+            ${targetPos.x + curveOffset} ${targetPos.y},
             ${targetPos.x} ${targetPos.y}
         `
 

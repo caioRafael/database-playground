@@ -9,6 +9,71 @@ import {
   generateId 
 } from '@/context/database-context'
 
+const TABLE_WIDTH = 220
+const TABLE_HEADER_HEIGHT = 40
+const TABLE_COLUMN_HEIGHT = 28
+const TABLE_MIN_HEIGHT = TABLE_HEADER_HEIGHT + TABLE_COLUMN_HEIGHT
+const TABLE_GAP = 40
+
+function getTableBounds(table: Table): { x: number; y: number; width: number; height: number } {
+  const height = TABLE_HEADER_HEIGHT + table.columns.length * TABLE_COLUMN_HEIGHT
+  return {
+    x: table.position.x,
+    y: table.position.y,
+    width: TABLE_WIDTH,
+    height,
+  }
+}
+
+function boundsOverlap(
+  a: { x: number; y: number; width: number; height: number },
+  b: { x: number; y: number; width: number; height: number }
+): boolean {
+  return (
+    a.x < b.x + b.width &&
+    a.x + a.width > b.x &&
+    a.y < b.y + b.height &&
+    a.y + a.height > b.y
+  )
+}
+
+function findNextPosition(tables: Table[]): { x: number; y: number } {
+  const newBounds = { x: 0, y: 0, width: TABLE_WIDTH, height: TABLE_MIN_HEIGHT }
+  const startX = 50
+  const startY = 50
+  const stepX = TABLE_WIDTH + TABLE_GAP
+  const stepY = TABLE_MIN_HEIGHT + TABLE_GAP
+  for (let row = 0; row < 100; row++) {
+    for (let col = 0; col < 100; col++) {
+      newBounds.x = startX + col * stepX
+      newBounds.y = startY + row * stepY
+      const overlaps = tables.some(t => boundsOverlap(newBounds, getTableBounds(t)))
+      if (!overlaps) return { x: newBounds.x, y: newBounds.y }
+    }
+  }
+  return { x: startX, y: startY }
+}
+
+function findNearestFreePosition(tables: Table[], preferX: number, preferY: number): { x: number; y: number } {
+  const newBounds = { x: preferX, y: preferY, width: TABLE_WIDTH, height: TABLE_MIN_HEIGHT }
+  const overlaps = tables.some(t => boundsOverlap(newBounds, getTableBounds(t)))
+  if (!overlaps) return { x: preferX, y: preferY }
+  const stepX = TABLE_WIDTH + TABLE_GAP
+  const stepY = TABLE_MIN_HEIGHT + TABLE_GAP
+  for (let radius = 1; radius <= 20; radius++) {
+    for (let dy = -radius; dy <= radius; dy++) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        if (Math.abs(dx) !== radius && Math.abs(dy) !== radius) continue
+        newBounds.x = preferX + dx * stepX
+        newBounds.y = preferY + dy * stepY
+        const stillOverlaps = tables.some(t => boundsOverlap(newBounds, getTableBounds(t)))
+        if (!stillOverlaps) return { x: newBounds.x, y: newBounds.y }
+      }
+    }
+  }
+  return findNextPosition(tables)
+}
+
 interface DatabaseProviderProps {
   children: ReactNode
 }
@@ -22,12 +87,17 @@ export function DatabaseProvider({ children }: DatabaseProviderProps) {
   const [selectedColumnId, setSelectedColumnId] = useState<string | null>(null)
 
   const addTable = useCallback((position?: { x: number; y: number }) => {
-    const newTable = createEmptyTable(position || { x: 100, y: 100 })
-    setSchema(prev => ({
-      ...prev,
-      tables: [...prev.tables, newTable],
-    }))
-    setSelectedTableId(newTable.id)
+    const newId = generateId()
+    setSchema(prev => {
+      const tables = prev.tables
+      const finalPosition =
+        position != null
+          ? findNearestFreePosition(tables, position.x, position.y)
+          : findNextPosition(tables)
+      const newTable = createEmptyTable(finalPosition, newId)
+      return { ...prev, tables: [...tables, newTable] }
+    })
+    setSelectedTableId(newId)
   }, [])
 
   const removeTable = useCallback((tableId: string) => {

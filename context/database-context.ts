@@ -7,8 +7,8 @@ export function generateId(): string {
   return Math.random().toString(36).substring(2, 15)
 }
 
-export function createEmptyTable(position: { x: number; y: number }): Table {
-  const id = generateId()
+export function createEmptyTable(position: { x: number; y: number }, existingId?: string): Table {
+  const id = existingId ?? generateId()
   return {
     id,
     name: 'nova_tabela',

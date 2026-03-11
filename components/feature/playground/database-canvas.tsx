@@ -147,7 +147,7 @@ export function DatabaseCanvas() {
                 variant="secondary"
                 size="sm"
                 className="gap-2"
-                  onClick={() => addTable({ x: 50, y: 50 })}
+                  onClick={() => addTable()}
                 >
                 <Plus className="h-4 w-4" />
                 Nova Tabela
@@ -179,13 +179,7 @@ export function DatabaseCanvas() {
                     transformOrigin: '0 0',
                 }}
                 >
-                {/* Relationship Lines */}
-                <RelationshipLines 
-                    relationships={schema.relationships} 
-                    tables={schema.tables} 
-                />
-
-                {/* Table Nodes */}
+                {/* Table Nodes (below lines so they don't cover them) */}
                 {schema.tables.map(table => (
                     <DatabaseTableNode
                         key={table.id}
@@ -193,6 +187,12 @@ export function DatabaseCanvas() {
                         onDragStart={handleTableDragStart}
                     />
                 ))}
+
+                {/* Relationship Lines - rendered on top with z-index so they're always visible */}
+                <RelationshipLines
+                    relationships={schema.relationships}
+                    tables={schema.tables}
+                />
                 </div>
             </div>
 
