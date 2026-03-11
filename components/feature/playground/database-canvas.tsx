@@ -147,7 +147,7 @@ export function DatabaseCanvas() {
                 variant="secondary"
                 size="sm"
                 className="gap-2"
-                //   onClick={() => addTable({ x: 50, y: 50 })}
+                  onClick={() => addTable({ x: 50, y: 50 })}
                 >
                 <Plus className="h-4 w-4" />
                 Nova Tabela
