@@ -84,13 +84,13 @@ export function DatabaseRelationshipModal() {
                     Relacionar tabelas
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-lg w-[95vw] p-4 sm:p-6">
+            <DialogContent className="p-4 sm:p-6 w-full min-w-[500px]">
                 <DialogHeader>
                     <DialogTitle>Nova relação</DialogTitle>
                 </DialogHeader>
 
                 <div className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto">
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div className="w-full grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div className="flex flex-col gap-2">
                             <span className="text-xs font-medium text-muted-foreground">Tabela fonte</span>
                             <Select
