@@ -5,8 +5,21 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useDatabaseContext } from "@/context/database-context"
+import type { TableAnchor, RelationshipPathType } from "@/interface/database-types"
 
 type RelationshipType = 'one-to-one' | 'one-to-many' | 'many-to-many'
+
+const ANCHOR_OPTIONS: { value: TableAnchor; label: string }[] = [
+  { value: 'left', label: 'Esquerda' },
+  { value: 'right', label: 'Direita' },
+  { value: 'top', label: 'Topo' },
+  { value: 'bottom', label: 'Base' },
+]
+
+const PATH_TYPE_OPTIONS: { value: RelationshipPathType; label: string }[] = [
+  { value: 'curve', label: 'Curva' },
+  { value: 'orthogonal', label: 'Ângulos retos' },
+]
 
 export function DatabaseRelationshipModal() {
     const { schema, addRelationship } = useDatabaseContext()
@@ -19,6 +32,9 @@ export function DatabaseRelationshipModal() {
     const [targetTableId, setTargetTableId] = useState<string | undefined>()
     const [targetColumnId, setTargetColumnId] = useState<string | undefined>()
     const [relationshipType, setRelationshipType] = useState<RelationshipType>('one-to-many')
+    const [sourceAnchor, setSourceAnchor] = useState<TableAnchor>('left')
+    const [targetAnchor, setTargetAnchor] = useState<TableAnchor>('right')
+    const [pathType, setPathType] = useState<RelationshipPathType>('curve')
 
     const sourceTable = useMemo(
         () => tables.find(t => t.id === sourceTableId),
@@ -52,6 +68,9 @@ export function DatabaseRelationshipModal() {
         setTargetTableId(undefined)
         setTargetColumnId(undefined)
         setRelationshipType('one-to-many')
+        setSourceAnchor('left')
+        setTargetAnchor('right')
+        setPathType('curve')
     }
 
     function handleCreateRelationship() {
@@ -63,6 +82,9 @@ export function DatabaseRelationshipModal() {
             targetTableId,
             targetColumnId,
             type: relationshipType,
+            sourceAnchor,
+            targetAnchor,
+            pathType,
         })
 
         setOpen(false)
@@ -195,6 +217,48 @@ export function DatabaseRelationshipModal() {
                                 <SelectItem value="many-to-many">N : N (many-to-many)</SelectItem>
                             </SelectContent>
                         </Select>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                        <div className="flex flex-col gap-2">
+                            <span className="text-xs font-medium text-muted-foreground">Conexão na tabela fonte</span>
+                            <Select value={sourceAnchor} onValueChange={(v: TableAnchor) => setSourceAnchor(v)}>
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {ANCHOR_OPTIONS.map((opt) => (
+                                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <span className="text-xs font-medium text-muted-foreground">Conexão na tabela destino</span>
+                            <Select value={targetAnchor} onValueChange={(v: TableAnchor) => setTargetAnchor(v)}>
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {ANCHOR_OPTIONS.map((opt) => (
+                                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <span className="text-xs font-medium text-muted-foreground">Traçado da linha</span>
+                            <Select value={pathType} onValueChange={(v: RelationshipPathType) => setPathType(v)}>
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {PATH_TYPE_OPTIONS.map((opt) => (
+                                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
 
                     <div className="flex justify-end gap-2 pt-2">

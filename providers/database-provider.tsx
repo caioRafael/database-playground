@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, type ReactNode } from 'react'
+import { useState, useCallback, useEffect, useRef, type ReactNode } from 'react'
 import type { Table, Column, Relationship, DatabaseSchema } from '@/interface/database-types'
 import { 
   DatabaseContext, 
@@ -8,6 +8,24 @@ import {
   createEmptyColumn,
   generateId 
 } from '@/context/database-context'
+
+const STORAGE_KEY = 'database-playground-schema'
+
+const EMPTY_SCHEMA: DatabaseSchema = { tables: [], relationships: [] }
+
+function loadSchemaFromStorage(): DatabaseSchema {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return EMPTY_SCHEMA
+    const parsed = JSON.parse(raw) as DatabaseSchema
+    if (!parsed || !Array.isArray(parsed.tables) || !Array.isArray(parsed.relationships)) {
+      return EMPTY_SCHEMA
+    }
+    return parsed
+  } catch {
+    return EMPTY_SCHEMA
+  }
+}
 
 const TABLE_WIDTH = 220
 const TABLE_HEADER_HEIGHT = 40
@@ -79,12 +97,32 @@ interface DatabaseProviderProps {
 }
 
 export function DatabaseProvider({ children }: DatabaseProviderProps) {
-  const [schema, setSchema] = useState<DatabaseSchema>({
-    tables: [],
-    relationships: [],
-  })
+  const [schema, setSchema] = useState<DatabaseSchema>(EMPTY_SCHEMA)
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null)
   const [selectedColumnId, setSelectedColumnId] = useState<string | null>(null)
+  const [selectedRelationshipId, setSelectedRelationshipId] = useState<string | null>(null)
+  const hasLoadedFromStorage = useRef(false)
+
+  // Load from localStorage after hydration so server and client first render match
+  useEffect(() => {
+    const stored = loadSchemaFromStorage()
+    const id = setTimeout(() => {
+      if (stored.tables.length > 0 || stored.relationships.length > 0) {
+        setSchema(stored)
+      }
+      hasLoadedFromStorage.current = true
+    }, 0)
+    return () => clearTimeout(id)
+  }, [])
+
+  useEffect(() => {
+    if (!hasLoadedFromStorage.current) return
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(schema))
+    } catch {
+      // ignore quota or other storage errors
+    }
+  }, [schema])
 
   const addTable = useCallback((position?: { x: number; y: number }) => {
     const newId = generateId()
@@ -202,9 +240,21 @@ export function DatabaseProvider({ children }: DatabaseProviderProps) {
     }))
   }, [])
 
+  const updateRelationship = useCallback((relationshipId: string, updates: Partial<Relationship>) => {
+    setSchema(prev => ({
+      ...prev,
+      relationships: prev.relationships.map(r =>
+        r.id === relationshipId ? { ...r, ...updates } : r
+      ),
+    }))
+  }, [])
+
   const removeRelationship = useCallback((relationshipId: string) => {
     const relationship = schema.relationships.find(r => r.id === relationshipId)
     if (relationship) {
+      if (selectedRelationshipId === relationshipId) {
+        setSelectedRelationshipId(null)
+      }
       // Remove foreign key flag from source column
       setSchema(prev => ({
         tables: prev.tables.map(t => 
@@ -222,7 +272,7 @@ export function DatabaseProvider({ children }: DatabaseProviderProps) {
         relationships: prev.relationships.filter(r => r.id !== relationshipId),
       }))
     }
-  }, [schema.relationships])
+  }, [schema.relationships, selectedRelationshipId])
 
   const updateTablePosition = useCallback((tableId: string, position: { x: number; y: number }) => {
     setSchema(prev => ({
@@ -237,6 +287,14 @@ export function DatabaseProvider({ children }: DatabaseProviderProps) {
     setSchema({ tables: [], relationships: [] })
     setSelectedTableId(null)
     setSelectedColumnId(null)
+    setSelectedRelationshipId(null)
+  }, [])
+
+  const setSchemaFromExternal = useCallback((newSchema: DatabaseSchema) => {
+    setSchema(newSchema)
+    setSelectedTableId(null)
+    setSelectedColumnId(null)
+    setSelectedRelationshipId(null)
   }, [])
 
   return (
@@ -255,8 +313,12 @@ export function DatabaseProvider({ children }: DatabaseProviderProps) {
         updateColumn,
         addRelationship,
         removeRelationship,
+        updateRelationship,
+        selectedRelationshipId,
+        setSelectedRelationshipId,
         updateTablePosition,
         clearSchema,
+        setSchema: setSchemaFromExternal,
       }}
     >
       {children}

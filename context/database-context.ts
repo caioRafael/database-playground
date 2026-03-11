@@ -67,8 +67,12 @@ export interface DatabaseContextType {
   updateColumn: (tableId: string, columnId: string, updates: Partial<Column>) => void
   addRelationship: (relationship: Omit<Relationship, 'id'>) => void
   removeRelationship: (relationshipId: string) => void
+  updateRelationship: (relationshipId: string, updates: Partial<Relationship>) => void
+  selectedRelationshipId: string | null
+  setSelectedRelationshipId: (id: string | null) => void
   updateTablePosition: (tableId: string, position: { x: number; y: number }) => void
   clearSchema: () => void
+  setSchema: (schema: DatabaseSchema) => void
 }
 
 export const DatabaseContext = createContext<DatabaseContextType | null>(null)

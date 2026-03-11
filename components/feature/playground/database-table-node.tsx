@@ -28,7 +28,7 @@ export function DatabaseTableNode({ table, onDragStart }: DatabaseTableNodeProps
     
     return (
         <div
-        className={`absolute min-w-[220px] select-none rounded-lg border bg-card shadow-lg transition-shadow ${
+        className={`absolute z-10 min-w-[220px] select-none rounded-lg border bg-card shadow-lg transition-shadow ${
           isSelected 
             ? 'border-primary shadow-primary/20 ring-1 ring-primary' 
             : 'border-border hover:border-muted-foreground/50'

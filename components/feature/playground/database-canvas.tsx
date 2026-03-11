@@ -26,7 +26,7 @@ interface DragState {
   
 
 export function DatabaseCanvas() {
-    const { schema, addTable, setSelectedTableId, setSelectedColumnId, updateTablePosition } = useDatabaseContext()
+    const { schema, addTable, setSelectedTableId, setSelectedColumnId, setSelectedRelationshipId, updateTablePosition } = useDatabaseContext()
     const canvasRef = useRef<HTMLDivElement>(null)
   
     const [zoom, setZoom] = useState(1)
@@ -94,7 +94,8 @@ export function DatabaseCanvas() {
       if (e.target === canvasRef.current || (e.target as HTMLElement).classList.contains('canvas-bg')) {
         setSelectedTableId(null)
         setSelectedColumnId(null)
-        
+        setSelectedRelationshipId(null)
+
         // Middle mouse button or space + left click for panning
         if (e.button === 1 || e.shiftKey) {
           e.preventDefault()
@@ -107,7 +108,7 @@ export function DatabaseCanvas() {
           })
         }
       }
-    }, [offset, setSelectedTableId, setSelectedColumnId])
+    }, [offset, setSelectedTableId, setSelectedColumnId, setSelectedRelationshipId])
   
     const handleWheel = useCallback((e: WheelEvent) => {
       if (e.ctrlKey || e.metaKey) {
@@ -179,7 +180,13 @@ export function DatabaseCanvas() {
                     transformOrigin: '0 0',
                 }}
                 >
-                {/* Table Nodes (below lines so they don't cover them) */}
+                {/* Relationship Lines - behind tables so lines don't overwrite table content */}
+                <RelationshipLines
+                    relationships={schema.relationships}
+                    tables={schema.tables}
+                />
+
+                {/* Table Nodes - on top so they're never covered by lines */}
                 {schema.tables.map(table => (
                     <DatabaseTableNode
                         key={table.id}
@@ -187,12 +194,6 @@ export function DatabaseCanvas() {
                         onDragStart={handleTableDragStart}
                     />
                 ))}
-
-                {/* Relationship Lines - rendered on top with z-index so they're always visible */}
-                <RelationshipLines
-                    relationships={schema.relationships}
-                    tables={schema.tables}
-                />
                 </div>
             </div>
 
