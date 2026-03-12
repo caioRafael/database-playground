@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Database, LayoutDashboard, Settings } from "lucide-react";
+import { Database, LayoutDashboard, Settings, User } from "lucide-react";
 import {
   SidbarTrigger,
   Sidebar,
@@ -27,6 +27,11 @@ const NAV_ITEMS = [
     href: "/settings",
     label: "Configurações",
     icon: Settings,
+  },
+  {
+    href: "/profile",
+    label: "Perfil",
+    icon: User,
   },
 ];
 

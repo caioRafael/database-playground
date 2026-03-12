@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
 import OpenAI from "openai"
 import type { DatabaseSchema } from "@/interface/database-types"
+import { auth } from "@/lib/auth"
+import { db } from "@/lib/firebase"
 
 const SYSTEM_PROMPT = `Você é um especialista em bancos de dados e ORMs.
 Receberá:
@@ -26,6 +28,41 @@ export async function POST(request: Request) {
       { status: 500 },
     )
   }
+
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  })
+
+  if (!session || !session.user) {
+    return NextResponse.json(
+      { error: "Você precisa estar autenticado para usar a IA." },
+      { status: 401 },
+    )
+  }
+
+  const userRef = db.collection("users").doc(session.user.id)
+  const userSnap = await userRef.get()
+  const userData = userSnap.data() || {}
+  const currentCredits =
+    typeof userData.credits === "number" ? userData.credits : 0
+
+  if (currentCredits <= 0) {
+    return NextResponse.json(
+      {
+        error:
+          "Você não possui créditos suficientes para gerar código. Adicione créditos na página de perfil.",
+      },
+      { status: 402 },
+    )
+  }
+
+  const newCredits = currentCredits - 1
+  await userRef.set(
+    {
+      credits: newCredits,
+    },
+    { merge: true },
+  )
 
   let body: { schema?: DatabaseSchema; target?: string }
   try {
@@ -87,7 +124,7 @@ export async function POST(request: Request) {
       code = codeMatch[1].trim()
     }
 
-    return NextResponse.json({ code })
+    return NextResponse.json({ code, credits: newCredits })
   } catch (err) {
     if (err instanceof OpenAI.APIError) {
       return NextResponse.json(

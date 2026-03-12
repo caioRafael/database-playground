@@ -91,6 +91,22 @@ export function DatabaseGenerateCodeModal() {
       const data = await res.json().catch(() => ({}))
 
       if (!res.ok) {
+        if (res.status === 401) {
+          setError(
+            data.error ||
+              "Você precisa estar autenticado para usar a IA."
+          )
+          return
+        }
+
+        if (res.status === 402) {
+          setError(
+            data.error ||
+              "Você não possui créditos suficientes. Adicione créditos na página de perfil."
+          )
+          return
+        }
+
         setError(data.error || `Erro ${res.status}`)
         return
       }
