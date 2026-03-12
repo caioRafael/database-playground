@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useDatabaseContext } from '@/context/database-context'
 import type { DatabaseSchema } from '@/interface/database-types'
@@ -128,7 +128,7 @@ export function DatabaseAIChat({ isOpen, onOpenChange }: DatabaseAIChatProps) {
           </header>
 
           <div className="flex-1 flex flex-col gap-3 p-3 min-h-0">
-            <ScrollArea className="flex-1 rounded-lg border bg-muted/30 p-3">
+            <ScrollArea className="max-h-[calc(100vh-200px)] flex-1 rounded-lg border bg-muted/30 p-3">
               <div className="flex flex-col gap-3">
                 {messages.length === 0 && (
                   <p className="text-sm text-muted-foreground text-center py-4">
@@ -169,12 +169,12 @@ export function DatabaseAIChat({ isOpen, onOpenChange }: DatabaseAIChatProps) {
             )}
 
             <div className="flex gap-2">
-              <Input
+              <Textarea
                 placeholder="Descreva o banco de dados..."
                 value={input}
                 onChange={e => setInput(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
                 disabled={loading}
+                className="min-h-[44px] max-h-32 resize-none"
               />
               <Button
                 size="icon"

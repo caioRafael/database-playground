@@ -3,6 +3,7 @@ import { Toolbar } from "@/components/ui/toolbar";
 import { Sparkles } from "lucide-react";
 import { DatabaseRelationshipModal } from "./database-relationship-modal";
 import { DatabaseRelationshipOptionsPanel } from "./database-relationship-options-panel";
+import { DatabaseGenerateCodeModal } from "./database-generate-code-modal";
 
 interface DatabaseToolbarProps {
     aiChatOpen: boolean
@@ -23,9 +24,7 @@ export function DatabaseToolbar({ aiChatOpen, onToggleAIChat }: DatabaseToolbarP
                     <Sparkles className="h-4 w-4" />
                     {aiChatOpen ? "Fechar IA" : "Gerar com IA"}
                 </Button>
-                <Button variant="outline" size="sm">
-                    Executar
-                </Button>
+                <DatabaseGenerateCodeModal />
             </Toolbar>
             <DatabaseRelationshipOptionsPanel />
         </div>

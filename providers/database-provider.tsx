@@ -124,6 +124,71 @@ export function DatabaseProvider({ children }: DatabaseProviderProps) {
     }
   }, [schema])
 
+  const autoLayoutSchema = useCallback((input: DatabaseSchema): DatabaseSchema => {
+    if (input.tables.length === 0) return input
+
+    const tables = input.tables
+    const relationships = input.relationships
+
+    const layerByTable = new Map<string, number>()
+    tables.forEach(t => layerByTable.set(t.id, 0))
+
+    // Direção: tabela alvo (referenciada) → tabela origem (FK)
+    for (let pass = 0; pass < tables.length; pass++) {
+      let changed = false
+      for (const rel of relationships) {
+        const parentId = rel.targetTableId
+        const childId = rel.sourceTableId
+        const parentLayer = layerByTable.get(parentId)
+        const childLayer = layerByTable.get(childId)
+        if (parentLayer == null || childLayer == null) continue
+        if (childLayer <= parentLayer) {
+          layerByTable.set(childId, parentLayer + 1)
+          changed = true
+        }
+      }
+      if (!changed) break
+    }
+
+    const layers = new Map<number, string[]>()
+    layerByTable.forEach((layer, tableId) => {
+      const list = layers.get(layer) ?? []
+      list.push(tableId)
+      layers.set(layer, list)
+    })
+
+    // Descobre altura máxima de qualquer tabela para evitar sobreposição vertical
+    const maxTableHeight =
+      tables.reduce((max, t) => {
+        const height = TABLE_HEADER_HEIGHT + t.columns.length * TABLE_COLUMN_HEIGHT
+        return Math.max(max, height)
+      }, TABLE_MIN_HEIGHT) || TABLE_MIN_HEIGHT
+
+    const startX = 50
+    const startY = 50
+    const stepX = TABLE_WIDTH + TABLE_GAP
+    const stepY = maxTableHeight + TABLE_GAP
+    const maxColumns = 4
+
+    const positionedTables = tables.map(table => {
+      const rawLayer = layerByTable.get(table.id) ?? 0
+      const layer = Math.min(rawLayer, maxColumns - 1)
+      const layerTables = layers.get(layer) ?? []
+      const indexInLayer = layerTables.indexOf(table.id)
+      const order = indexInLayer === -1 ? 0 : indexInLayer
+
+      return {
+        ...table,
+        position: {
+          x: startX + layer * stepX,
+          y: startY + order * stepY,
+        },
+      }
+    })
+
+    return { ...input, tables: positionedTables }
+  }, [])
+
   const addTable = useCallback((position?: { x: number; y: number }) => {
     const newId = generateId()
     setSchema(prev => {
@@ -291,11 +356,12 @@ export function DatabaseProvider({ children }: DatabaseProviderProps) {
   }, [])
 
   const setSchemaFromExternal = useCallback((newSchema: DatabaseSchema) => {
-    setSchema(newSchema)
+    const laidOut = autoLayoutSchema(newSchema)
+    setSchema(laidOut)
     setSelectedTableId(null)
     setSelectedColumnId(null)
     setSelectedRelationshipId(null)
-  }, [])
+  }, [autoLayoutSchema])
 
   return (
     <DatabaseContext.Provider

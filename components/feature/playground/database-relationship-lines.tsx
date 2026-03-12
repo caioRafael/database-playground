@@ -191,7 +191,15 @@ export function RelationshipLines({ relationships, tables }: RelationshipLinesPr
 
   const [dragState, setDragState] = useState<
     | { type: 'curve'; relationshipId: string; startX: number; startY: number; initialControl: { x: number; y: number } }
-    | { type: 'orthogonal'; relationshipId: string; startX: number; startY: number; initialMidY: number; sourceX: number; targetX: number }
+    | {
+        type: 'orthogonal'
+        relationshipId: string
+        startX: number
+        startY: number
+        initialCenter: { x: number; y: number }
+        sourceX: number
+        targetX: number
+      }
     | null
   >(null)
   const svgRef = useRef<SVGSVGElement>(null)
@@ -258,14 +266,14 @@ export function RelationshipLines({ relationships, tables }: RelationshipLinesPr
   )
 
   const handleOrthogonalHandleMouseDown = useCallback(
-    (e: React.MouseEvent, relId: string, midY: number, sourceX: number, targetX: number) => {
+    (e: React.MouseEvent, relId: string, center: { x: number; y: number }, sourceX: number, targetX: number) => {
       e.stopPropagation()
       setDragState({
         type: 'orthogonal',
         relationshipId: relId,
         startX: e.clientX,
         startY: e.clientY,
-        initialMidY: midY,
+        initialCenter: center,
         sourceX,
         targetX,
       })
@@ -290,10 +298,12 @@ export function RelationshipLines({ relationships, tables }: RelationshipLinesPr
           },
         })
       } else {
-        const newMidY = dragState.initialMidY + dy
+        const newCenterX = dragState.initialCenter.x + dx
+        const newMidY = dragState.initialCenter.y + dy
         updateRelationship(dragState.relationshipId, {
           waypoints: [
             { x: dragState.sourceX, y: newMidY },
+            { x: newCenterX, y: newMidY },
             { x: dragState.targetX, y: newMidY },
           ],
         })
@@ -359,15 +369,10 @@ export function RelationshipLines({ relationships, tables }: RelationshipLinesPr
         let waypoints: { x: number; y: number }[]
 
         if (isOrthogonal) {
-          const raw =
-            rel.waypoints && rel.waypoints.length >= 2
+          waypoints =
+            rel.waypoints && rel.waypoints.length > 0
               ? rel.waypoints
               : defaultOrthogonalWaypoints(sourcePos.x, sourcePos.y, targetPos.x, targetPos.y)
-          const midY = raw.length >= 2 ? (raw[0].y + raw[1].y) / 2 : (sourcePos.y + targetPos.y) / 2
-          waypoints = [
-            { x: sourcePos.x, y: midY },
-            { x: targetPos.x, y: midY },
-          ]
           const segments = [sourcePos, ...waypoints, targetPos]
           path = segments.reduce((acc, p, i) => acc + (i === 0 ? `M ${p.x} ${p.y}` : ` L ${p.x} ${p.y}`), '')
         } else {
@@ -410,15 +415,24 @@ export function RelationshipLines({ relationships, tables }: RelationshipLinesPr
 
             {isSelected && isOrthogonal && waypoints.length >= 2 && (
               <circle
-                cx={(waypoints[0].x + waypoints[1].x) / 2}
-                cy={waypoints[0].y}
+                cx={waypoints.length === 2 ? (waypoints[0].x + waypoints[1].x) / 2 : waypoints[1].x}
+                cy={waypoints.length === 2 ? waypoints[0].y : waypoints[1].y}
                 r="8"
                 fill="oklch(0.72 0.19 155 / 0.3)"
                 stroke="oklch(0.72 0.19 155)"
                 strokeWidth="2"
                 style={{ cursor: 'grab', pointerEvents: 'all' }}
                 onMouseDown={e =>
-                  handleOrthogonalHandleMouseDown(e, rel.id, waypoints[0].y, sourcePos.x, targetPos.x)
+                  handleOrthogonalHandleMouseDown(
+                    e,
+                    rel.id,
+                    {
+                      x: waypoints.length === 2 ? (waypoints[0].x + waypoints[1].x) / 2 : waypoints[1].x,
+                      y: waypoints.length === 2 ? waypoints[0].y : waypoints[1].y,
+                    },
+                    sourcePos.x,
+                    targetPos.x
+                  )
                 }
               />
             )}
