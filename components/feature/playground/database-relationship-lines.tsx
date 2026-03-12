@@ -34,6 +34,40 @@ function pointInBounds(x: number, y: number, b: Bounds): boolean {
   return x >= b.x && x <= b.x + b.width && y >= b.y && y <= b.y + b.height
 }
 
+function getTableCenter(bounds: Bounds): { x: number; y: number } {
+  return {
+    x: bounds.x + bounds.width / 2,
+    y: bounds.y + bounds.height / 2,
+  }
+}
+
+function pickBestAnchors(
+  sourceTable: Table,
+  targetTable: Table
+): { sourceAnchor: TableAnchor; targetAnchor: TableAnchor } {
+  const sourceBounds = getTableBounds(sourceTable)
+  const targetBounds = getTableBounds(targetTable)
+  const sourceCenter = getTableCenter(sourceBounds)
+  const targetCenter = getTableCenter(targetBounds)
+
+  const dx = targetCenter.x - sourceCenter.x
+  const dy = targetCenter.y - sourceCenter.y
+
+  if (Math.abs(dx) >= Math.abs(dy)) {
+    // Predominant direção horizontal
+    if (dx >= 0) {
+      return { sourceAnchor: 'right', targetAnchor: 'left' }
+    }
+    return { sourceAnchor: 'left', targetAnchor: 'right' }
+  }
+
+  // Predominant direção vertical
+  if (dy >= 0) {
+    return { sourceAnchor: 'bottom', targetAnchor: 'top' }
+  }
+  return { sourceAnchor: 'top', targetAnchor: 'bottom' }
+}
+
 // Sample point on quadratic curve: B(t) = (1-t)²P0 + 2(1-t)tP1 + t²P2, t in [0,1]
 function sampleQuadratic(
   sx: number, sy: number,
@@ -305,13 +339,20 @@ export function RelationshipLines({ relationships, tables }: RelationshipLinesPr
       </defs>
 
       {relationships.map((rel, index) => {
-        const sourceAnchor = rel.sourceAnchor ?? 'left'
-        const targetAnchor = rel.targetAnchor ?? 'right'
+        const sourceTable = tables.find(t => t.id === rel.sourceTableId)
+        const targetTable = tables.find(t => t.id === rel.targetTableId)
+        if (!sourceTable || !targetTable) return null
+
+        const autoAnchors = pickBestAnchors(sourceTable, targetTable)
+
+        const sourceAnchor = rel.sourceAnchor ?? autoAnchors.sourceAnchor
+        const targetAnchor = rel.targetAnchor ?? autoAnchors.targetAnchor
+
         const sourcePos = getPosition(rel.sourceTableId, rel.sourceColumnId, sourceAnchor)
         const targetPos = getPosition(rel.targetTableId, rel.targetColumnId, targetAnchor)
         if (!sourcePos || !targetPos) return null
 
-        const pathType = rel.pathType ?? 'curve'
+        const pathType = rel.pathType ?? 'orthogonal'
         const isOrthogonal = pathType === 'orthogonal'
 
         let path: string

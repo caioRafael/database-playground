@@ -7,7 +7,7 @@ const COLUMN_TYPES: ColumnType[] = [
   'DECIMAL', 'FLOAT', 'UUID', 'JSON',
 ]
 
-const SYSTEM_PROMPT = `Você é um especialista em modelagem de bancos de dados relacionais. Sua tarefa é gerar um schema de banco de dados em JSON estrito, a partir da descrição do usuário.
+const SYSTEM_PROMPT = `Você é um especialista em modelagem de bancos de dados relacionais. Sua tarefa é gerar ou editar um schema de banco de dados em JSON estrito, a partir da descrição do usuário e, quando fornecido, de um schema atual.
 
 Regras do schema:
 - tables: array de tabelas. Cada tabela tem: id (string única, ex: "tbl_1"), name (nome da tabela em snake_case), columns (array), position (objeto { x: number, y: number } para posição no canvas).
@@ -15,6 +15,7 @@ Regras do schema:
 - Toda tabela deve ter pelo menos uma coluna com isPrimaryKey true (geralmente "id" do tipo INT ou UUID).
 - relationships: array. Cada item: id (string única), sourceTableId, sourceColumnId (coluna FK), targetTableId, targetColumnId (coluna referenciada), type: "one-to-one" | "one-to-many" | "many-to-many".
 - Posições no canvas: use grid. x: 50, 310, 570, ... (incremento 260). y: 50, 138, 226, ... (incremento 88). Coloque até 3 tabelas por linha.
+- Quando um schema atual for fornecido, ele será enviado em JSON. Use-o como base e aplique as alterações solicitadas pelo usuário, preservando o que já faz sentido e ajustando apenas o necessário (por exemplo: adicionar tabelas/colunas, renomear, mudar tipos, criar/remover relacionamentos).
 
 Responda APENAS com o JSON válido do schema, sem markdown e sem texto antes ou depois. Formato:
 {"tables":[...],"relationships":[...]}`
@@ -28,7 +29,7 @@ export async function POST(request: Request) {
     )
   }
 
-  let body: { messages?: { role: string; content: string }[] }
+  let body: { messages?: { role: string; content: string }[]; schema?: DatabaseSchema }
   try {
     body = await request.json()
   } catch {
@@ -48,14 +49,27 @@ export async function POST(request: Request) {
 
   const openai = new OpenAI({ apiKey })
 
-  const openAiMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-    { role: 'system', content: SYSTEM_PROMPT },
-    ...messages
-      .filter(m => m.role === 'user' || m.role === 'assistant')
+  const historyMessages =
+    messages
+      ?.filter(m => m.role === 'user' || m.role === 'assistant')
       .map(m => ({
         role: m.role as 'user' | 'assistant',
         content: m.content,
-      })),
+      })) ?? []
+
+  const openAiMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+    { role: 'system', content: SYSTEM_PROMPT },
+    ...(body.schema
+      ? [
+          {
+            role: 'system' as const,
+            content:
+              'A seguir está o schema atual do banco de dados em JSON. Use-o como base e aplique apenas as alterações que o usuário solicitar, mantendo o que já funciona quando fizer sentido:\n\n' +
+              JSON.stringify(body.schema),
+          },
+        ]
+      : []),
+    ...historyMessages,
   ]
 
   try {
