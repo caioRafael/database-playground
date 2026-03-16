@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useDatabaseContext } from "@/context/database-context";
-import { Maximize2, Plus, ZoomIn, ZoomOut } from "lucide-react";
+import { Loader2, Maximize2, Plus, ZoomIn, ZoomOut } from "lucide-react";
 import { useRef, useState, useCallback   } from "react";
 import { DatabaseTableNode } from "./database-table-node";
 import { RelationshipLines } from "./database-relationship-lines";
@@ -26,7 +26,7 @@ interface DragState {
   
 
 export function DatabaseCanvas() {
-    const { schema, addTable, setSelectedTableId, setSelectedColumnId, setSelectedRelationshipId, updateTablePosition } = useDatabaseContext()
+    const { schema, addTable, setSelectedTableId, setSelectedColumnId, setSelectedRelationshipId, updateTablePosition, isGeneratingWithAI } = useDatabaseContext()
     const canvasRef = useRef<HTMLDivElement>(null)
   
     const [zoom, setZoom] = useState(1)
@@ -142,6 +142,16 @@ export function DatabaseCanvas() {
     }, [])
     return (
         <div className="relative flex-1 overflow-hidden bg-background">
+            {isGeneratingWithAI && (
+              <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-background/70">
+                <div className="flex items-center gap-2 rounded-md bg-background px-3 py-2 text-sm shadow">
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  <span className="text-xs sm:text-sm text-muted-foreground">
+                    Gerando e atualizando o modelo com IA...
+                  </span>
+                </div>
+              </div>
+            )}
             {/* controles do canvas */}
             <div className="absolute left-4 top-4 z-10 flex gap-2">
                 <Button
@@ -158,6 +168,7 @@ export function DatabaseCanvas() {
             {/* canvas */}
             <div
                 ref={canvasRef}
+                data-db-canvas-root="true"
                 className="canvas-bg h-full w-full cursor-grab active:cursor-grabbing"
                 onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => handleCanvasMouseDown(e as unknown as MouseEvent)}
                 onMouseMove={(e: React.MouseEvent<HTMLDivElement>) => handleMouseMove(e as unknown as MouseEvent)}

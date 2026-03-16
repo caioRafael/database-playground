@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useDatabaseContext } from '@/context/database-context'
 import type { DatabaseSchema } from '@/interface/database-types'
-import { Sparkles, Send, Loader2, Check, X } from 'lucide-react'
+import { Sparkles, Send, Loader2, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface ChatMessage {
@@ -23,12 +23,11 @@ interface DatabaseAIChatProps {
 
 export function DatabaseAIChat({ isOpen, onOpenChange }: DatabaseAIChatProps) {
   const router = useRouter()
-  const { schema, setSchema } = useDatabaseContext()
+  const { schema, setSchema, setIsGeneratingWithAI } = useDatabaseContext()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [pendingSchema, setPendingSchema] = useState<DatabaseSchema | null>(null)
   const [checkingCredits, setCheckingCredits] = useState(false)
   const [hasCredits, setHasCredits] = useState<boolean | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -81,8 +80,27 @@ export function DatabaseAIChat({ isOpen, onOpenChange }: DatabaseAIChatProps) {
   const handleSend = async () => {
     const text = input.trim()
     if (!text || loading) return
-    if (!hasCredits) {
-      setError('Você precisa de créditos para usar a IA. Vá até a página de perfil para comprar mais créditos.')
+
+    // Revalida créditos sempre que o usuário tenta enviar
+    try {
+      const creditsRes = await fetch('/api/credits')
+      if (!creditsRes.ok) {
+        setHasCredits(false)
+        setError('Não foi possível verificar seus créditos agora. Tente novamente em alguns instantes.')
+        return
+      }
+      const creditsData = await creditsRes.json()
+      const credits =
+        typeof creditsData.credits === 'number' ? creditsData.credits : 0
+      const stillHasCredits = credits > 0
+      setHasCredits(stillHasCredits)
+      if (!stillHasCredits) {
+        setError('Você precisa de créditos para usar a IA. Vá até a página de perfil para comprar mais créditos.')
+        return
+      }
+    } catch {
+      setHasCredits(false)
+      setError('Não foi possível verificar seus créditos agora. Tente novamente em alguns instantes.')
       return
     }
 
@@ -95,6 +113,7 @@ export function DatabaseAIChat({ isOpen, onOpenChange }: DatabaseAIChatProps) {
     setInput('')
     setError(null)
     setLoading(true)
+    setIsGeneratingWithAI(true)
 
     const conversation = [...messages, userMessage].map(m => ({
       role: m.role,
@@ -115,16 +134,18 @@ export function DatabaseAIChat({ isOpen, onOpenChange }: DatabaseAIChatProps) {
       if (!res.ok) {
         setError(data.error || `Erro ${res.status}`)
         setLoading(false)
+        setIsGeneratingWithAI(false)
         return
       }
 
       const newSchema = data.schema as DatabaseSchema
       if (newSchema?.tables && Array.isArray(newSchema.tables)) {
-        setPendingSchema(newSchema)
+        // aplica imediatamente ao canvas
+        setSchema(newSchema)
         const assistantMessage: ChatMessage = {
           id: crypto.randomUUID(),
           role: 'assistant',
-          content: `Pronto! Gerei um modelo com ${newSchema.tables.length} tabela(s) e ${newSchema.relationships?.length ?? 0} relacionamento(s). Clique em "Aplicar ao canvas" para usar.`,
+          content: `Pronto! Gerei um modelo com ${newSchema.tables.length} tabela(s) e ${newSchema.relationships?.length ?? 0} relacionamento(s). O canvas já foi atualizado automaticamente.`,
         }
         setMessages(prev => [...prev, assistantMessage])
       } else {
@@ -134,13 +155,7 @@ export function DatabaseAIChat({ isOpen, onOpenChange }: DatabaseAIChatProps) {
       setError(e instanceof Error ? e.message : 'Erro ao chamar a IA.')
     } finally {
       setLoading(false)
-    }
-  }
-
-  const handleApply = () => {
-    if (pendingSchema) {
-      setSchema(pendingSchema)
-      setPendingSchema(null)
+      setIsGeneratingWithAI(false)
     }
   }
 
@@ -209,13 +224,6 @@ export function DatabaseAIChat({ isOpen, onOpenChange }: DatabaseAIChatProps) {
                 <div ref={bottomRef} />
               </div>
             </ScrollArea>
-
-            {pendingSchema && (
-              <Button onClick={handleApply} className="gap-2 w-full">
-                <Check className="h-4 w-4" />
-                Aplicar ao canvas
-              </Button>
-            )}
 
             {checkingCredits || hasCredits === null ? (
               <div className="text-sm text-muted-foreground text-center py-2">

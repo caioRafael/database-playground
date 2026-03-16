@@ -4,6 +4,8 @@ import { Sparkles } from "lucide-react";
 import { DatabaseRelationshipModal } from "./database-relationship-modal";
 import { DatabaseRelationshipOptionsPanel } from "./database-relationship-options-panel";
 import { DatabaseGenerateCodeModal } from "./database-generate-code-modal";
+import { DatabaseExportSchemaModal } from "./database-export-schema-modal";
+import { DatabaseImportSchemaButton } from "./database-import-schema-button";
 
 interface DatabaseToolbarProps {
     aiChatOpen: boolean
@@ -15,6 +17,8 @@ export function DatabaseToolbar({ aiChatOpen, onToggleAIChat }: DatabaseToolbarP
         <div className="flex flex-col shrink-0">
             <Toolbar>
                 <DatabaseRelationshipModal />
+                <DatabaseImportSchemaButton />
+                <DatabaseExportSchemaModal />
                 <Button 
                     variant={aiChatOpen ? "default" : "outline"} 
                     size="sm"

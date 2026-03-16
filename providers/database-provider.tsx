@@ -101,6 +101,7 @@ export function DatabaseProvider({ children }: DatabaseProviderProps) {
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null)
   const [selectedColumnId, setSelectedColumnId] = useState<string | null>(null)
   const [selectedRelationshipId, setSelectedRelationshipId] = useState<string | null>(null)
+  const [isGeneratingWithAI, setIsGeneratingWithAI] = useState(false)
   const hasLoadedFromStorage = useRef(false)
 
   // Load from localStorage after hydration so server and client first render match
@@ -369,8 +370,10 @@ export function DatabaseProvider({ children }: DatabaseProviderProps) {
         schema,
         selectedTableId,
         selectedColumnId,
+        isGeneratingWithAI,
         setSelectedTableId,
         setSelectedColumnId,
+        setIsGeneratingWithAI,
         addTable,
         removeTable,
         updateTable,

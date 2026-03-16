@@ -57,8 +57,10 @@ export interface DatabaseContextType {
   schema: DatabaseSchema
   selectedTableId: string | null
   selectedColumnId: string | null
+  isGeneratingWithAI: boolean
   setSelectedTableId: (id: string | null) => void
   setSelectedColumnId: (id: string | null) => void
+  setIsGeneratingWithAI: (value: boolean) => void
   addTable: (position?: { x: number; y: number }) => void
   removeTable: (tableId: string) => void
   updateTable: (tableId: string, updates: Partial<Table>) => void

@@ -14,14 +14,9 @@ import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   {
-    href: "/",
-    label: "Dashboard",
-    icon: LayoutDashboard,
-  },
-  {
     href: "/playground",
     label: "Playground",
-    icon: Database,
+    icon: LayoutDashboard,
   },
   {
     href: "/settings",
