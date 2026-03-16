@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSession, authClient } from "@/lib/auth-client";
+import { useSession, signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -45,10 +45,8 @@ export default function ProfilePage() {
     }
   }, [session?.user]);
 
-  const handleLoginGithub = async () => {
-    await authClient.signIn.social({
-      provider: "github",
-    });
+  const handleLoginGithub = () => {
+    signIn("github");
   };
 
   const handleAddCredits = async () => {

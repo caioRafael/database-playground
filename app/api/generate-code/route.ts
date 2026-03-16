@@ -29,11 +29,9 @@ export async function POST(request: Request) {
     )
   }
 
-  const session = await auth.api.getSession({
-    headers: request.headers,
-  })
+  const session = await auth()
 
-  if (!session || !session.user) {
+  if (!session?.user?.id) {
     return NextResponse.json(
       { error: "Você precisa estar autenticado para usar a IA." },
       { status: 401 },

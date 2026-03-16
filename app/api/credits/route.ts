@@ -2,12 +2,10 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/firebase";
 
-export async function GET(request: Request) {
-  const session = await auth.api.getSession({
-    headers: request.headers,
-  });
+export async function GET() {
+  const session = await auth();
 
-  if (!session || !session.user) {
+  if (!session?.user?.id) {
     return NextResponse.json(
       { error: "Não autenticado." },
       { status: 401 },
@@ -24,11 +22,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const session = await auth.api.getSession({
-    headers: request.headers,
-  });
+  const session = await auth();
 
-  if (!session || !session.user) {
+  if (!session?.user?.id) {
     return NextResponse.json(
       { error: "Não autenticado." },
       { status: 401 },

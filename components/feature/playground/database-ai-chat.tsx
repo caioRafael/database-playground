@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -21,21 +22,69 @@ interface DatabaseAIChatProps {
 }
 
 export function DatabaseAIChat({ isOpen, onOpenChange }: DatabaseAIChatProps) {
+  const router = useRouter()
   const { schema, setSchema } = useDatabaseContext()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pendingSchema, setPendingSchema] = useState<DatabaseSchema | null>(null)
+  const [checkingCredits, setCheckingCredits] = useState(false)
+  const [hasCredits, setHasCredits] = useState<boolean | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (isOpen) bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [isOpen, messages])
 
+  useEffect(() => {
+    if (!isOpen) return
+
+    let cancelled = false
+
+    const fetchCredits = async () => {
+      setCheckingCredits(true)
+      try {
+        const res = await fetch('/api/credits')
+        if (!res.ok) {
+          if (!cancelled) {
+            setHasCredits(false)
+          }
+          return
+        }
+
+        const data = await res.json()
+        const credits =
+          typeof data.credits === 'number' ? data.credits : 0
+
+        if (!cancelled) {
+          setHasCredits(credits > 0)
+        }
+      } catch {
+        if (!cancelled) {
+          setHasCredits(false)
+        }
+      } finally {
+        if (!cancelled) {
+          setCheckingCredits(false)
+        }
+      }
+    }
+
+    fetchCredits()
+
+    return () => {
+      cancelled = true
+    }
+  }, [isOpen])
+
   const handleSend = async () => {
     const text = input.trim()
     if (!text || loading) return
+    if (!hasCredits) {
+      setError('Você precisa de créditos para usar a IA. Vá até a página de perfil para comprar mais créditos.')
+      return
+    }
 
     const userMessage: ChatMessage = {
       id: crypto.randomUUID(),
@@ -168,27 +217,45 @@ export function DatabaseAIChat({ isOpen, onOpenChange }: DatabaseAIChatProps) {
               </Button>
             )}
 
-            <div className="flex gap-2">
-              <Textarea
-                placeholder="Descreva o banco de dados..."
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                disabled={loading}
-                className="min-h-[44px] max-h-32 resize-none"
-              />
-              <Button
-                size="icon"
-                onClick={handleSend}
-                disabled={loading || !input.trim()}
-              >
-                {loading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-                <span className="sr-only">Enviar</span>
-              </Button>
-            </div>
+            {checkingCredits || hasCredits === null ? (
+              <div className="text-sm text-muted-foreground text-center py-2">
+                Verificando créditos disponíveis...
+              </div>
+            ) : hasCredits ? (
+              <div className="flex gap-2">
+                <Textarea
+                  placeholder="Descreva o banco de dados..."
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  disabled={loading}
+                  className="min-h-[44px] max-h-32 resize-none"
+                />
+                <Button
+                  size="icon"
+                  onClick={handleSend}
+                  disabled={loading || !input.trim()}
+                >
+                  {loading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                  <span className="sr-only">Enviar</span>
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <p className="text-sm text-muted-foreground">
+                  Você não possui créditos suficientes para usar a IA de geração de modelo.
+                </p>
+                <Button
+                  className="w-full"
+                  onClick={() => router.push('/profile')}
+                >
+                  Ir para a página de perfil para comprar créditos
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -1,9 +1,9 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { signIn, signOut, useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { authClient, useSession } from "@/lib/auth-client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const ROUTE_LABELS: Record<string, string> = {
@@ -21,10 +21,8 @@ export function Header() {
   const title = getPageTitle(pathname);
   const { data: session } = useSession();
 
-  const handleGithubLogin = async () => {
-    await authClient.signIn.social({
-      provider: "github",
-    });
+  const handleGithubLogin = () => {
+    signIn("github");
   };
 
   return (
@@ -50,6 +48,9 @@ export function Header() {
             <span className="text-sm text-foreground">
               {session.user.name ?? session.user.email}
             </span>
+            <Button variant="ghost" size="sm" onClick={() => signOut()}>
+              Sair
+            </Button>
           </div>
         ) : (
           <Button variant="outline" size="sm" onClick={handleGithubLogin}>

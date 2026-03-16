@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import type { DatabaseSchema, ColumnType, Relationship } from '@/interface/database-types'
+import { auth } from '@/lib/auth'
+import { db } from '@/lib/firebase'
 
 const COLUMN_TYPES: ColumnType[] = [
   'INT', 'BIGINT', 'VARCHAR', 'TEXT', 'BOOLEAN', 'DATE', 'TIMESTAMP',
@@ -28,6 +30,39 @@ export async function POST(request: Request) {
       { status: 500 }
     )
   }
+
+  const session = await auth()
+
+  if (!session?.user?.id) {
+    return NextResponse.json(
+      { error: 'Você precisa estar autenticado para usar a IA.' },
+      { status: 401 }
+    )
+  }
+
+  const userRef = db.collection('users').doc(session.user.id)
+  const userSnap = await userRef.get()
+  const userData = userSnap.data() || {}
+  const currentCredits =
+    typeof userData.credits === 'number' ? userData.credits : 0
+
+  if (currentCredits <= 0) {
+    return NextResponse.json(
+      {
+        error:
+          'Você não possui créditos suficientes para gerar o modelo. Adicione créditos na página de perfil.',
+      },
+      { status: 402 }
+    )
+  }
+
+  const newCredits = currentCredits - 1
+  await userRef.set(
+    {
+      credits: newCredits,
+    },
+    { merge: true }
+  )
 
   let body: { messages?: { role: string; content: string }[]; schema?: DatabaseSchema }
   try {
@@ -101,7 +136,7 @@ export async function POST(request: Request) {
     }
 
     const schema = validateAndNormalizeSchema(parsed)
-    return NextResponse.json({ schema })
+    return NextResponse.json({ schema, credits: newCredits })
   } catch (err) {
     if (err instanceof OpenAI.APIError) {
       return NextResponse.json(
