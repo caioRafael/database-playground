@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { createPayment } from "@/lib/abacate";
 
 type ProfileClientProps = {
   user: {
@@ -21,45 +22,53 @@ export function ProfileClient({ user, initialCredits }: ProfileClientProps) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  // const handleAddCredits = async () => {
+  //   const amountNumber = Number(addAmount);
+  //   if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
+  //     setError("Informe um valor positivo para adicionar créditos.");
+  //     return;
+  //   }
+
+  //   setSaving(true);
+  //   setError(null);
+  //   setSuccess(null);
+
+  //   try {
+  //     const res = await fetch("/api/credits", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({ amount: amountNumber }),
+  //     });
+
+  //     const data = await res.json();
+
+  //     if (!res.ok) {
+  //       setError(data.error || "Não foi possível adicionar créditos.");
+  //       return;
+  //     }
+
+  //     setCredits(
+  //       typeof data.credits === "number" ? data.credits : amountNumber,
+  //     );
+  //     setSuccess("Créditos adicionados com sucesso!");
+  //   } catch (e) {
+  //     setError(
+  //       e instanceof Error
+  //         ? e.message
+  //         : "Erro inesperado ao adicionar créditos.",
+  //     );
+  //   } finally {
+  //     setSaving(false);
+  //   }
+  // };
+
   const handleAddCredits = async () => {
-    const amountNumber = Number(addAmount);
-    if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
-      setError("Informe um valor positivo para adicionar créditos.");
-      return;
-    }
+    const price = 5;
 
-    setSaving(true);
-    setError(null);
-    setSuccess(null);
+    const payment = await createPayment(price, "PIX_QRCODE");
 
-    try {
-      const res = await fetch("/api/credits", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: amountNumber }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || "Não foi possível adicionar créditos.");
-        return;
-      }
-
-      setCredits(
-        typeof data.credits === "number" ? data.credits : amountNumber,
-      );
-      setSuccess("Créditos adicionados com sucesso!");
-    } catch (e) {
-      setError(
-        e instanceof Error
-          ? e.message
-          : "Erro inesperado ao adicionar créditos.",
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
+    console.log(payment);
+  }
 
   return (
     <div className="p-6 flex justify-center">
