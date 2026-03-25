@@ -161,12 +161,12 @@ export function DatabaseGenerateCodeModal() {
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="p-4 sm:p-6 w-full max-w-6xl max-h-[calc(100vh-200px)]">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[calc(100vh-200px)] w-full max-w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden p-4 sm:max-w-7xl sm:p-6">
+        <DialogHeader className="shrink-0">
           <DialogTitle>Gerar código do banco com IA</DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto">
           <div className="flex flex-col gap-2">
             <span className="text-xs font-medium text-muted-foreground">
               Linguagem / ORM
@@ -250,14 +250,15 @@ export function DatabaseGenerateCodeModal() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-2">
+          <div className="flex min-w-0 flex-col gap-2">
             <span className="text-xs font-medium text-muted-foreground">
               Código gerado (salvo automaticamente no navegador)
             </span>
             <Textarea
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              className="min-h-[160px] max-h-[40vh] font-mono text-xs resize-none"
+              spellCheck={false}
+              className="min-h-[160px] max-h-[40vh] min-w-0 w-full resize-none font-mono text-xs whitespace-pre-wrap wrap-anywhere"
               placeholder="O código gerado aparecerá aqui..."
             />
             {error && (

@@ -120,12 +120,12 @@ export function DatabaseExportSchemaModal() {
             <Button
               type="button"
               variant="outline"
-              className="justify-start gap-2 h-auto py-3"
+              className="h-auto min-w-0 shrink justify-start gap-2 py-3"
               disabled={!hasSchema}
               onClick={handleDownloadJson}
             >
               <FileJson2 className="h-4 w-4" />
-              <div className="flex flex-col items-start">
+              <div className="flex min-w-0 flex-col items-start whitespace-normal text-left">
                 <span className="text-sm font-medium">Exportar como JSON</span>
                 <span className="text-[11px] text-muted-foreground">
                   Ideal para integrações e versionamento.
@@ -136,7 +136,7 @@ export function DatabaseExportSchemaModal() {
             <Button
               type="button"
               variant="default"
-              className="justify-start gap-2 h-auto py-3"
+              className="h-auto min-w-0 shrink justify-start gap-2 py-3"
               disabled={!hasSchema || loadingPdf}
               onClick={handleDownloadPdf}
             >
@@ -145,9 +145,9 @@ export function DatabaseExportSchemaModal() {
               ) : (
                 <FileText className="h-4 w-4" />
               )}
-              <div className="flex flex-col items-start">
+              <div className="flex min-w-0 flex-col items-start whitespace-normal text-left">
                 <span className="text-sm font-medium">Exportar como PDF</span>
-                <span className="text-[11px] text-muted-foreground">
+                <span className="text-[11px] text-muted">
                   Resumo legível do schema para documentação.
                 </span>
               </div>

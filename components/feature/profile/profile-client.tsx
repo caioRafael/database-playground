@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { createPayment } from "@/lib/abacate";
+// import { createPayment } from "@/lib/abacate";
 
 type ProfileClientProps = {
   user: {
@@ -65,9 +65,11 @@ export function ProfileClient({ user, initialCredits }: ProfileClientProps) {
   const handleAddCredits = async () => {
     const price = 5;
 
-    const payment = await createPayment(price, "PIX_QRCODE");
+    // const payment = await createPayment(price, "PIX_QRCODE");
 
-    console.log(payment);
+    // console.log(payment);
+
+    return price;
   }
 
   return (
